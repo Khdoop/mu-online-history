@@ -1,0 +1,95 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatRange, getSeasons, groupSeasons } from '@/lib/seasons';
+
+const seasons = await getSeasons();
+const groups = groupSeasons(seasons);
+---
+
+<BaseLayout
+  title="Seasons"
+  description="Every MU Online release from Season 0 to the present, with dates and entry counts."
+>
+  <div class="page-shell max-w-6xl py-10 sm:py-12">
+    <h1 class="font-display text-2xl font-bold text-ink-100 sm:text-4xl">All seasons</h1>
+    <p class="mt-3 max-w-2xl text-sm text-ink-400">
+      {seasons.length} releases, grouped by era. Use the filter to jump straight to a season.
+    </p>
+
+    <div class="mt-8">
+      <label for="season-filter" class="sr-only">Filter seasons</label>
+      <input
+        id="season-filter"
+        type="search"
+        placeholder="Filter by name or year…"
+        autocomplete="off"
+        class="w-full max-w-md rounded border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-sm text-ink-100 placeholder:text-ink-400 focus:border-ember-500 focus:outline-none"
+      />
+      <p id="filter-status" role="status" class="mt-2 h-4 text-xs text-ink-400"></p>
+    </div>
+
+    <div class="mt-6 space-y-10" data-season-list>
+      {
+        groups.map((group) => (
+          <section data-group>
+            <h2 class="font-display text-lg font-semibold text-ember-300">{group.label}</h2>
+            <ul class="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+              {group.seasons.map((season) => (
+                <li
+                  data-season
+                  data-search={`${season.data.title} ${season.data.range}`.toLowerCase()}
+                >
+                  <a
+                    href={`/seasons/${season.id}`}
+                    class="group block h-full rounded border border-ink-800 bg-ink-900/50 p-4 transition-colors hover:border-ember-500/50 hover:bg-ink-850"
+                  >
+                    <h3 class="font-display text-sm font-semibold text-ink-100 group-hover:text-ember-300">
+                      {season.data.title}
+                    </h3>
+                    <p class="mt-1.5 font-mono text-xs text-ink-400">{formatRange(season)}</p>
+                    <p class="mt-3 flex gap-3 text-xs text-ink-400">
+                      <span>{season.data.entryCount} entries</span>
+                      <span>{season.data.citedRefs.length} sources</span>
+                    </p>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </div>
+
+    <p data-empty hidden class="mt-8 text-sm text-ink-400">No seasons match that filter.</p>
+  </div>
+</BaseLayout>
+
+<script>
+  const input = document.querySelector<HTMLInputElement>('#season-filter');
+  const status = document.querySelector<HTMLElement>('#filter-status');
+  const empty = document.querySelector<HTMLElement>('[data-empty]');
+  const groups = [...document.querySelectorAll<HTMLElement>('[data-group]')];
+
+  function applyFilter(rawQuery: string) {
+    const query = rawQuery.trim().toLowerCase();
+    let visible = 0;
+
+    for (const group of groups) {
+      let groupVisible = 0;
+
+      for (const item of group.querySelectorAll<HTMLElement>('[data-season]')) {
+        const match = !query || (item.dataset.search ?? '').includes(query);
+        item.hidden = !match;
+        if (match) groupVisible += 1;
+      }
+
+      group.hidden = groupVisible === 0;
+      visible += groupVisible;
+    }
+
+    if (empty) empty.hidden = visible > 0;
+    if (status) status.textContent = query ? `${visible} season(s) match “${rawQuery.trim()}”` : '';
+  }
+
+  input?.addEventListener('input', () => applyFilter(input.value));
+</script>

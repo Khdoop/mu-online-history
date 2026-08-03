@@ -1,0 +1,69 @@
+---
+/**
+ * Turns the `<mu-cite data-refs="1,2">` placeholders emitted by
+ * scripts/split-source.mjs into real links, and renders a hover/focus card with
+ * the source URL. Done as a custom element so the markdown stays plain HTML and
+ * no framework runtime is shipped.
+ */
+import { references } from '@/lib/seasons';
+
+interface Props {
+  /** Reference ids cited on this page. Omit to embed the full reference list. */
+  refIds?: number[];
+}
+
+const { refIds } = Astro.props;
+
+// Only the cited subset is inlined — the full list is ~70KB of JSON and most
+// seasons cite a few dozen sources at most. Only `url` is used client-side.
+const wanted = refIds ? new Set(refIds) : null;
+const lookup = Object.fromEntries(
+  references
+    .filter((reference) => !wanted || wanted.has(reference.id))
+    .map((reference) => [reference.id, reference.url]),
+);
+---
+
+<script is:inline set:html={`window.__MU_REFS__ = ${JSON.stringify(lookup)};`} />
+
+<script>
+  // id -> source url, inlined by the component above.
+  const refs: Record<string, string> =
+    (window as unknown as { __MU_REFS__?: Record<string, string> }).__MU_REFS__ ?? {};
+
+  function hostOf(url: string): string {
+    try {
+      const { hostname, pathname } = new URL(url);
+      if (hostname.endsWith('web.archive.org')) {
+        const original = pathname.match(/https?:\/\/([^/]+)/);
+        return original ? `${original[1].replace(/^www\./, '')} (archived)` : 'web.archive.org';
+      }
+      return hostname.replace(/^www\./, '');
+    } catch {
+      return 'source';
+    }
+  }
+
+  class MuCite extends HTMLElement {
+    connectedCallback() {
+      // Guard against double-initialisation on view transitions.
+      if (this.dataset.ready === 'true') return;
+      this.dataset.ready = 'true';
+
+      const ids = (this.dataset.refs ?? '').split(',').filter(Boolean);
+      this.replaceChildren();
+
+      for (const id of ids) {
+        const url = refs[id];
+        const link = document.createElement('a');
+        link.href = `/references#ref-${id}`;
+        link.textContent = id;
+        link.title = url ? `Reference ${id} — ${hostOf(url)}` : `Reference ${id}`;
+        link.setAttribute('aria-label', `Reference ${id}`);
+        this.append(link);
+      }
+    }
+  }
+
+  if (!customElements.get('mu-cite')) customElements.define('mu-cite', MuCite);
+</script>

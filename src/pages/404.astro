@@ -1,0 +1,44 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getSeasons } from '@/lib/seasons';
+
+const seasons = await getSeasons();
+const latest = seasons[seasons.length - 1];
+---
+
+<BaseLayout title="Page not found" description="That page does not exist.">
+  <div class="page-shell max-w-3xl py-20 text-center sm:py-24">
+    <p class="font-mono text-xs uppercase tracking-[0.25em] text-ember-400">Error 404</p>
+    <h1 class="mt-4 font-display text-3xl font-bold text-ink-100 sm:text-5xl">
+      This page is lost in Lorencia.
+    </h1>
+    <p class="mx-auto mt-5 max-w-lg text-sm leading-relaxed text-ink-300">
+      The page you asked for does not exist. It may have been renamed, or the link may be wrong.
+    </p>
+
+    <div class="mt-10 flex flex-wrap justify-center gap-3">
+      <a
+        href="/"
+        class="rounded border border-ember-500 bg-ember-500/15 px-5 py-2.5 text-sm font-medium text-ember-300 transition-colors hover:bg-ember-500/25"
+      >
+        Back to the timeline
+      </a>
+      <a
+        href="/seasons"
+        class="rounded border border-ink-700 px-5 py-2.5 text-sm font-medium text-ink-200 transition-colors hover:border-ink-600 hover:bg-ink-850"
+      >
+        Browse all seasons
+      </a>
+      {
+        latest && (
+          <a
+            href={`/seasons/${latest.id}`}
+            class="rounded border border-ink-700 px-5 py-2.5 text-sm font-medium text-ink-200 transition-colors hover:border-ink-600 hover:bg-ink-850"
+          >
+            Latest: {latest.data.title}
+          </a>
+        )
+      }
+    </div>
+  </div>
+</BaseLayout>

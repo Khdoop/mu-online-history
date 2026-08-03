@@ -1,0 +1,162 @@
+---
+import { render } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
+import Citations from '@/components/Citations.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatRange, getSeasons, type Season } from '@/lib/seasons';
+
+export const getStaticPaths = (async () => {
+  const seasons = await getSeasons();
+
+  return seasons.map((season, index) => ({
+    params: { id: season.id },
+    props: {
+      season,
+      prev: seasons[index - 1] ?? null,
+      next: seasons[index + 1] ?? null,
+    },
+  }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+  season: Season;
+  prev: Season | null;
+  next: Season | null;
+}
+
+const { season, prev, next } = Astro.props;
+const { Content, headings } = await render(season);
+
+// Only `##` headings exist in generated season bodies — one per patch.
+const patches = headings.filter((heading) => heading.depth === 2);
+---
+
+<BaseLayout
+  title={season.data.title}
+  description={`MU Online ${season.data.title} (${season.data.range}): ${season.data.entryCount} documented changes with sources.`}
+>
+  <article class="page-shell max-w-6xl py-10 sm:py-12">
+    <nav aria-label="Breadcrumb" class="mb-6 text-xs text-ink-400">
+      <a href="/seasons" class="hover:text-ember-300">Seasons</a>
+      <span aria-hidden="true" class="mx-1.5">/</span>
+      <span class="text-ink-300">{season.data.title}</span>
+    </nav>
+
+    <header class="border-b border-ink-800 pb-6 sm:pb-8">
+      <h1 class="font-display text-2xl font-bold leading-tight text-ink-100 sm:text-5xl">
+        {season.data.title}
+      </h1>
+      <p class="mt-3 font-mono text-xs text-ember-400 sm:text-sm">{formatRange(season)}</p>
+      <ul class="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-ink-400 sm:mt-5 sm:gap-x-5">
+        <li>{season.data.entryCount} changelog entries</li>
+        {patches.length > 0 && <li>{patches.length} patches</li>}
+        <li>{season.data.citedRefs.length} distinct sources</li>
+      </ul>
+    </header>
+
+    <div class="mt-10 gap-12 lg:grid lg:grid-cols-[minmax(0,1fr)_16rem]">
+      <div class="season-prose min-w-0">
+        <Content />
+      </div>
+
+      {/* Patch list is collapsed on phones, where a tall nested scroll area would
+          push the actual content far down the page. Forced open from `lg` up by
+          the `lg:*` rules on `.patch-toc`. */}
+      {
+        patches.length > 0 && (
+          <aside class="patch-toc order-first mb-8 lg:order-0 lg:mb-0">
+            <details
+              open
+              class="group rounded border border-ink-800 lg:sticky lg:top-24 lg:rounded-none lg:border-0"
+            >
+              <summary
+                class="flex cursor-pointer list-none items-center justify-between gap-2 p-3 font-mono text-xs uppercase tracking-wider text-ink-400 lg:cursor-default lg:p-0"
+              >
+                <span>Patches in this season ({patches.length})</span>
+                <span
+                  class="text-ink-400 transition-transform group-open:rotate-180 lg:hidden"
+                  aria-hidden="true"
+                >
+                  ▾
+                </span>
+              </summary>
+              <ul
+                class="max-h-[60vh] space-y-1 overflow-y-auto border-t border-ink-800 px-3 pb-3 pt-2 text-xs lg:mt-3 lg:max-h-[70vh] lg:border-l lg:border-t-0 lg:px-0 lg:pb-0 lg:pl-3"
+              >
+                {patches.map((patch) => (
+                  <li>
+                    <a
+                      href={`#${patch.slug}`}
+                      class="block rounded py-1 text-ink-400 transition-colors hover:text-ember-300"
+                    >
+                      {patch.text}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </aside>
+        )
+      }
+    </div>
+
+    <nav
+      aria-label="Season navigation"
+      class="mt-16 grid gap-3 border-t border-ink-800 pt-8 sm:grid-cols-2"
+    >
+      {
+        prev ? (
+          <a
+            href={`/seasons/${prev.id}`}
+            class="group rounded border border-ink-800 bg-ink-900/50 p-4 transition-colors hover:border-ember-500/50"
+          >
+            <span class="text-xs text-ink-400">← Previous</span>
+            <span class="mt-1 block font-display text-sm font-semibold text-ink-100 group-hover:text-ember-300">
+              {prev.data.title}
+            </span>
+          </a>
+        ) : (
+          <span />
+        )
+      }
+      {
+        next && (
+          <a
+            href={`/seasons/${next.id}`}
+            class="group rounded border border-ink-800 bg-ink-900/50 p-4 text-right transition-colors hover:border-ember-500/50 sm:col-start-2"
+          >
+            <span class="text-xs text-ink-400">Next →</span>
+            <span class="mt-1 block font-display text-sm font-semibold text-ink-100 group-hover:text-ember-300">
+              {next.data.title}
+            </span>
+          </a>
+        )
+      }
+    </nav>
+  </article>
+
+  <Citations refIds={season.data.citedRefs} />
+</BaseLayout>
+
+<script>
+  // The patch list renders open so it works without JS and stays open on
+  // desktop. On phones it starts collapsed, since it can be 70+ items long.
+  const toc = document.querySelector<HTMLDetailsElement>('.patch-toc details');
+
+  if (toc) {
+    const wide = window.matchMedia('(min-width: 64rem)');
+    let userToggled = false;
+
+    // Once the reader opens or closes it themselves, stop overriding them.
+    toc.addEventListener('toggle', () => {
+      if (toc.open !== wide.matches) userToggled = true;
+    });
+
+    const sync = () => {
+      if (!userToggled) toc.open = wide.matches;
+    };
+
+    sync();
+    wide.addEventListener('change', sync);
+  }
+</script>

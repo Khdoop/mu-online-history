@@ -1,0 +1,139 @@
+---
+const path = Astro.url.pathname;
+
+const links = [
+  { href: '/', label: 'Timeline' },
+  { href: '/seasons', label: 'Seasons' },
+  { href: '/references', label: 'References' },
+  { href: '/about', label: 'About' },
+];
+
+function isActive(href: string): boolean {
+  return href === '/' ? path === '/' : path.startsWith(href);
+}
+---
+
+<header
+  class="sticky top-0 z-40 border-b border-ink-800 bg-ink-950/90 backdrop-blur supports-backdrop-filter:bg-ink-950/75"
+  data-site-header
+>
+  <div class="page-shell flex max-w-6xl items-center justify-between gap-3 py-3">
+    <a href="/" class="group flex shrink-0 items-center gap-2.5">
+      <span
+        class="grid h-8 w-8 place-items-center rounded border border-ember-500/40 bg-ember-500/10 font-display text-sm font-bold text-ember-300"
+        aria-hidden="true">MU</span
+      >
+      <span class="font-display text-sm font-semibold tracking-wide text-ink-100 sm:text-base">
+        MU Online History
+      </span>
+    </a>
+
+    {/* Inline from `sm` up; below that the same links live in the panel below. */}
+    <nav aria-label="Main" class="hidden sm:block">
+      <ul class="flex items-center gap-1 text-sm">
+        {
+          links.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                aria-current={isActive(link.href) ? 'page' : undefined}
+                class:list={[
+                  'block whitespace-nowrap rounded px-3 py-1.5 transition-colors',
+                  isActive(link.href)
+                    ? 'bg-ink-800 text-ember-300'
+                    : 'text-ink-300 hover:bg-ink-850 hover:text-ink-100',
+                ]}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <button
+      type="button"
+      data-menu-toggle
+      aria-expanded="false"
+      aria-controls="mobile-nav"
+      aria-label="Open menu"
+      class="-mr-1 grid h-10 w-10 shrink-0 place-items-center rounded border border-ink-700 text-ink-200 transition-colors hover:border-ink-600 hover:bg-ink-850 sm:hidden"
+    >
+      <span class="menu-icon" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+    </button>
+  </div>
+
+  {/* Mobile panel. Hidden from assistive tech and keyboard while collapsed. */}
+  <nav
+    id="mobile-nav"
+    aria-label="Main"
+    data-mobile-nav
+    hidden
+    class="border-t border-ink-800 bg-ink-950/95 sm:hidden"
+  >
+    <ul class="page-shell max-w-6xl py-2">
+      {
+        links.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              aria-current={isActive(link.href) ? 'page' : undefined}
+              class:list={[
+                'block rounded px-3 py-3 text-sm transition-colors',
+                isActive(link.href)
+                  ? 'bg-ink-800 text-ember-300'
+                  : 'text-ink-200 hover:bg-ink-850 hover:text-ink-100',
+              ]}
+            >
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</header>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+  const panel = document.querySelector<HTMLElement>('[data-mobile-nav]');
+
+  if (toggle && panel) {
+    const setOpen = (open: boolean) => {
+      panel.hidden = !open;
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      toggle.classList.toggle('is-open', open);
+    };
+
+    toggle.addEventListener('click', () => {
+      setOpen(panel.hidden === true);
+    });
+
+    // Escape closes the panel and returns focus to the button.
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !panel.hidden) {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+
+    // A tap outside the header dismisses it.
+    document.addEventListener('click', (event) => {
+      const target = event.target as Node;
+      if (panel.hidden) return;
+      if (!panel.contains(target) && !toggle.contains(target)) setOpen(false);
+    });
+
+    // Never leave the panel open when the inline nav takes over at `sm`.
+    const wide = window.matchMedia('(min-width: 40rem)');
+    wide.addEventListener('change', () => {
+      if (wide.matches) setOpen(false);
+    });
+  }
+</script>

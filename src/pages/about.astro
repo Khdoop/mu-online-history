@@ -1,0 +1,80 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getSeasons, references } from '@/lib/seasons';
+
+const seasons = await getSeasons();
+const totalEntries = seasons.reduce((sum, season) => sum + season.data.entryCount, 0);
+---
+
+<BaseLayout title="About" description="How this MU Online timeline is sourced and generated.">
+  <div class="page-shell max-w-3xl py-10 sm:py-12">
+    <h1 class="font-display text-2xl font-bold text-ink-100 sm:text-4xl">About this project</h1>
+
+    <div class="season-prose mt-8">
+      <p>
+        This site documents the release history of <strong>MU Online</strong> — every version,
+        season and notable patch from the 2001 closed alpha in South Korea through to the current
+        season. It currently covers <strong>{seasons.length} releases</strong>, <strong
+          >{totalEntries} individual changes</strong
+        > and <strong>{references.length} cited sources</strong>.
+      </p>
+
+      <h2>Credits</h2>
+      <p>
+        <strong>
+          All of the historical research presented here comes from the <a
+            href="https://github.com/AlighieriDemiurgs/MuHistory"
+            target="_blank"
+            rel="noopener noreferrer">AlighieriDemiurgs/MuHistory</a
+          > repository.
+        </strong>
+      </p>
+      <p>
+        Every date, patch note, correction and citation was gathered, verified and cross-referenced
+        by the maintainer of that project — including the archival work of tracking down long-dead
+        Korean patch pages through the Wayback Machine. Full credit for the content belongs to
+        them.
+      </p>
+      <p>
+        This site contributes only the presentation layer. It is an independent project, not
+        affiliated with or endorsed by the MuHistory maintainer. For the canonical, actively
+        maintained version of the history — and to submit corrections to it — go to <a
+          href="https://github.com/AlighieriDemiurgs/MuHistory"
+          target="_blank"
+          rel="noopener noreferrer">the source repository</a
+        >.
+      </p>
+
+      <h2>Sourcing</h2>
+      <p>
+        Nearly every entry carries one or more citation numbers. Those link to the <a
+          href="/references">references page</a
+        >, where each source points at an archived copy of the original patch note, announcement or
+        press release — most via the Wayback Machine, since the original Korean pages are long
+        gone.
+      </p>
+      <p>
+        Where sources conflict or evidence is thin, the timeline says so directly in a nested note
+        under the entry rather than picking a side silently.
+      </p>
+
+      <h2>How the site is built</h2>
+      <p>
+        The whole timeline lives in a single research document, <code>source.md</code>. A build
+        script (<code>scripts/split-source.mjs</code>) splits it into one markdown file per season,
+        extracts the reference list into JSON, and rewrites the inline citation markup into links.
+        Astro then renders those as static pages — no client-side framework, no database.
+      </p>
+      <p>
+        That document is a copy of the upstream MuHistory research, so factual corrections belong
+        there rather than here — this site picks them up when it re-syncs and rebuilds.
+      </p>
+
+      <h2>Disclaimer</h2>
+      <p>
+        Community research project, not affiliated with or endorsed by Webzen Inc. MU Online and
+        related names are trademarks of their respective owners.
+      </p>
+    </div>
+  </div>
+</BaseLayout>

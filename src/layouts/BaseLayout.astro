@@ -1,0 +1,70 @@
+---
+import Header from '@/components/Header.astro';
+import '@/styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = 'A sourced, patch-by-patch timeline of MU Online from the 2001 closed alpha to today.',
+} = Astro.props;
+
+const fullTitle = title === 'MU Online History' ? title : `${title} — MU Online History`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&display=swap"
+    />
+  </head>
+  <body class="min-h-screen">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-ember-500 focus:px-4 focus:py-2 focus:font-medium focus:text-ink-950"
+    >
+      Skip to content
+    </a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="mt-24 border-t border-ink-800 bg-ink-900/60">
+      <div
+        class="page-shell flex max-w-6xl flex-col gap-2 py-8 text-xs leading-relaxed text-ink-400 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <p>
+          Research and sourcing by <a
+            href="https://github.com/AlighieriDemiurgs/MuHistory"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-ember-300 underline underline-offset-2">AlighieriDemiurgs/MuHistory</a
+          >. MU Online is a trademark of Webzen Inc. — this site is not affiliated with Webzen.
+        </p>
+        <p>
+          Every claim is cited. See the <a
+            href="/references"
+            class="text-ember-300 underline underline-offset-2">references</a
+          >.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

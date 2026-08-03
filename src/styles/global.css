@@ -1,0 +1,360 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-ink-950: #08090d;
+  --color-ink-900: #0d0f16;
+  --color-ink-850: #12141d;
+  --color-ink-800: #171a25;
+  --color-ink-700: #232634;
+  --color-ink-600: #333747;
+  --color-ink-400: #6f7590;
+  --color-ink-300: #9aa0bb;
+  --color-ink-200: #c3c8dd;
+  --color-ink-100: #e7e9f3;
+
+  --color-ember-500: #c8963c;
+  --color-ember-400: #dcaf55;
+  --color-ember-300: #ecc880;
+
+  --color-blood-500: #a3374a;
+  --color-blood-400: #c4536a;
+
+  --font-display: 'Cinzel', 'Georgia', 'Times New Roman', serif;
+  --font-sans: ui-sans-serif, system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, monospace;
+}
+
+@layer base {
+  html {
+    /* Root size everything else scales from. All type, spacing and layout
+       widths in this project are rem/em based, so this is the single knob. */
+    font-size: 18px;
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+    color-scheme: dark;
+
+    /* Always reserve the scrollbar gutter. Without this, navigating between a
+       short page (no scrollbar) and a long one (scrollbar) shifts all centred
+       content sideways by the scrollbar width. Overlay scrollbars — phones,
+       trackpad-only macs — reserve nothing, so this is a no-op there. */
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    background-color: var(--color-ink-950);
+    color: var(--color-ink-200);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Faint arcane glow behind the whole page. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(60rem 40rem at 15% -10%, rgba(200, 150, 60, 0.1), transparent 65%),
+      radial-gradient(45rem 35rem at 95% 8%, rgba(163, 55, 74, 0.09), transparent 60%);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+  }
+
+  ::selection {
+    background-color: var(--color-ember-500);
+    color: var(--color-ink-950);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ember-400);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Nothing should ever push the page sideways. `clip` rather than `hidden`:
+     `hidden` would turn the body into a scroll container and break the
+     `position: sticky` header. */
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  /* Long unbroken strings — archive URLs, item lists — must not force the
+     viewport wider on small screens. */
+  h1,
+  h2,
+  h3,
+  p,
+  li,
+  dt,
+  dd {
+    overflow-wrap: break-word;
+  }
+
+  /* Visible scrollbar on the dark theme — the default thumb is nearly
+     invisible against these backgrounds. */
+  * {
+    scrollbar-color: var(--color-ink-600) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: var(--color-ink-900);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-ink-600);
+    border: 2px solid var(--color-ink-900);
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-ink-400);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background-color: var(--color-ink-900);
+  }
+}
+
+@layer components {
+  /* Standard page gutter. Tighter on phones, where 1rem at an 18px root
+     costs meaningful reading width. */
+  .page-shell {
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: 0.85rem;
+  }
+
+  @media (width >= 40rem) {
+    .page-shell {
+      padding-inline: 1rem;
+    }
+  }
+
+  /* Vertical timeline rail on the home page. The gutter is a single variable so
+     the markers stay centred on the line at every breakpoint. */
+  .timeline-rail {
+    --rail-gutter: 1.25rem;
+    border-left: 1px solid var(--color-ink-700);
+    padding-left: var(--rail-gutter);
+  }
+
+  @media (width >= 40rem) {
+    .timeline-rail {
+      --rail-gutter: 2rem;
+    }
+  }
+
+  .timeline-marker {
+    position: absolute;
+    top: 0.35rem;
+    left: calc(var(--rail-gutter) * -1);
+    width: 0.7rem;
+    height: 0.7rem;
+    translate: -50% 0;
+    rotate: 45deg;
+    border: 1px solid var(--color-ember-500);
+    background-color: var(--color-ink-950);
+  }
+
+  /* Hamburger icon that morphs into a close (×) when its button is open. */
+  .menu-icon {
+    display: grid;
+    gap: 4px;
+    width: 1.05rem;
+  }
+
+  .menu-icon > span {
+    display: block;
+    height: 2px;
+    border-radius: 1px;
+    background-color: currentcolor;
+    transition:
+      translate 160ms ease,
+      rotate 160ms ease,
+      opacity 120ms ease;
+  }
+
+  .is-open .menu-icon > span:nth-child(1) {
+    translate: 0 6px;
+    rotate: 45deg;
+  }
+
+  .is-open .menu-icon > span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .is-open .menu-icon > span:nth-child(3) {
+    translate: 0 -6px;
+    rotate: -45deg;
+  }
+
+  /* Season patch table of contents. Collapsible on phones; from `lg` up the
+     `open` attribute is pinned on by script and the toggle affordance removed. */
+  .patch-toc summary::-webkit-details-marker {
+    display: none;
+  }
+
+  @media (width >= 64rem) {
+    .patch-toc summary {
+      pointer-events: none;
+    }
+  }
+
+  /* Rendered markdown body of one season. */
+  .season-prose {
+    /* Entries contain long comma-separated item lists and inline code; neither
+       may widen the page on a phone. */
+    overflow-wrap: break-word;
+  }
+
+  .season-prose code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    overflow-wrap: break-word;
+    background-color: var(--color-ink-850);
+    border: 1px solid var(--color-ink-700);
+    border-radius: 3px;
+    padding: 0.1em 0.35em;
+  }
+
+  .season-prose h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-ember-300);
+    margin-block: 2.25rem 0.85rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-ink-700);
+    scroll-margin-top: 5.5rem;
+  }
+
+  .season-prose h2:first-child {
+    margin-top: 0;
+  }
+
+  .season-prose > p {
+    color: var(--color-ink-300);
+    font-size: 0.925rem;
+    line-height: 1.75;
+    margin-block: 0.85rem;
+  }
+
+  .season-prose ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin-block: 0.85rem;
+  }
+
+  .season-prose li {
+    position: relative;
+    padding-left: 1.15rem;
+    font-size: 0.925rem;
+    line-height: 1.7;
+  }
+
+  .season-prose li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.66em;
+    width: 5px;
+    height: 5px;
+    rotate: 45deg;
+    background-color: var(--color-ember-500);
+  }
+
+  /* Nested clarification notes are visually demoted. */
+  .season-prose li ul {
+    margin-block: 0.5rem 0.25rem;
+    gap: 0.4rem;
+  }
+
+  .season-prose li li {
+    color: var(--color-ink-400);
+    font-size: 0.85rem;
+    border-left: 2px solid var(--color-ink-700);
+    padding-left: 0.85rem;
+  }
+
+  .season-prose li li::before {
+    display: none;
+  }
+
+  .season-prose strong {
+    color: var(--color-ink-100);
+    font-weight: 600;
+  }
+
+  .season-prose a {
+    color: var(--color-ember-300);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}
+
+/* Citation chips injected by scripts/split-source.mjs as <mu-cite data-refs="1,2">.
+   Scoped under `.season-prose` so these win over the generic prose link styles
+   above without needing `!important`. */
+@layer components {
+  mu-cite {
+    display: inline-flex;
+    gap: 0.25rem;
+    vertical-align: super;
+    font-size: 0.66em;
+    line-height: 1;
+    margin-left: 0.25em;
+  }
+
+  .season-prose mu-cite a {
+    position: relative;
+    color: var(--color-ink-400);
+    text-decoration: none;
+    font-family: var(--font-mono);
+    border: 1px solid var(--color-ink-700);
+    border-radius: 3px;
+    padding: 0.18em 0.4em;
+    transition:
+      color 120ms ease,
+      border-color 120ms ease,
+      background-color 120ms ease;
+  }
+
+  /* On touch screens the chips are far below the ~24px comfortable tap size.
+     An invisible expanded hit area fixes that without altering inline layout. */
+  @media (pointer: coarse) {
+    .season-prose mu-cite {
+      gap: 0.4rem;
+    }
+
+    .season-prose mu-cite a::after {
+      content: '';
+      position: absolute;
+      inset: -0.55em -0.3em;
+    }
+  }
+
+  .season-prose mu-cite a:hover {
+    color: var(--color-ember-300);
+    border-color: var(--color-ember-500);
+    background-color: rgba(200, 150, 60, 0.12);
+  }
+}
+
+/* Highlight a reference row when linked to directly. */
+:target > .ref-row {
+  border-color: var(--color-ember-500);
+  background-color: rgba(200, 150, 60, 0.08);
+}

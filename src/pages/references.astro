@@ -1,0 +1,115 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getSeasons, references, sourceLabel } from '@/lib/seasons';
+
+const seasons = await getSeasons();
+
+// Which seasons cite each reference, so a source can be traced back.
+const citedBy = new Map<number, string[]>();
+for (const season of seasons) {
+  for (const id of season.data.citedRefs) {
+    const list = citedBy.get(id) ?? [];
+    list.push(season.data.title);
+    citedBy.set(id, list);
+  }
+}
+---
+
+<BaseLayout
+  title="References"
+  description={`All ${references.length} sources behind the MU Online history timeline.`}
+>
+  <div class="page-shell max-w-4xl py-10 sm:py-12">
+    <h1 class="font-display text-2xl font-bold text-ink-100 sm:text-4xl">References</h1>
+    <p class="mt-3 text-sm text-ink-400">
+      {references.length} sources — archived patch notes, announcements, press releases and
+      community research. Citation numbers throughout the site link here.
+    </p>
+
+    <div class="mt-8">
+      <label for="ref-filter" class="sr-only">Filter references</label>
+      <input
+        id="ref-filter"
+        type="search"
+        placeholder="Filter by number, domain or note…"
+        autocomplete="off"
+        class="w-full max-w-md rounded border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-sm text-ink-100 placeholder:text-ink-400 focus:border-ember-500 focus:outline-none"
+      />
+      <p id="ref-status" role="status" class="mt-2 h-4 text-xs text-ink-400"></p>
+    </div>
+
+    <ol class="mt-6 space-y-2.5">
+      {
+        references.map((reference) => {
+          const seasonsCiting = citedBy.get(reference.id) ?? [];
+          const label = sourceLabel(reference.url);
+
+          return (
+            <li
+              id={`ref-${reference.id}`}
+              data-ref
+              data-search={`${reference.id} ${label} ${reference.url} ${reference.notes.join(' ')}`.toLowerCase()}
+            >
+              <div class="ref-row rounded border border-ink-800 bg-ink-900/50 p-4 transition-colors">
+                <div class="flex gap-3">
+                  <span class="shrink-0 font-mono text-xs text-ember-400">[{reference.id}]</span>
+                  <div class="min-w-0 flex-1">
+                    <a
+                      href={reference.url}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      class="block break-all text-sm text-ink-100 underline decoration-ink-600 underline-offset-2 hover:text-ember-300 hover:decoration-ember-500"
+                    >
+                      {label}
+                    </a>
+                    <p class="mt-1 break-all font-mono text-[0.68rem] leading-relaxed text-ink-400">
+                      {reference.url}
+                    </p>
+
+                    {reference.notes.length > 0 && (
+                      <ul class="mt-2.5 space-y-1 border-l-2 border-ink-700 pl-3">
+                        {reference.notes.map((note) => (
+                          <li class="text-xs leading-relaxed text-ink-300">{note}</li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {seasonsCiting.length > 0 && (
+                      <p class="mt-2.5 text-[0.68rem] text-ink-400">
+                        Cited in: {seasonsCiting.join(', ')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </li>
+          );
+        })
+      }
+    </ol>
+
+    <p data-empty hidden class="mt-8 text-sm text-ink-400">No references match that filter.</p>
+  </div>
+</BaseLayout>
+
+<script>
+  const input = document.querySelector<HTMLInputElement>('#ref-filter');
+  const status = document.querySelector<HTMLElement>('#ref-status');
+  const empty = document.querySelector<HTMLElement>('[data-empty]');
+  const items = [...document.querySelectorAll<HTMLElement>('[data-ref]')];
+
+  input?.addEventListener('input', () => {
+    const raw = input.value.trim();
+    const query = raw.toLowerCase();
+    let visible = 0;
+
+    for (const item of items) {
+      const match = !query || (item.dataset.search ?? '').includes(query);
+      item.hidden = !match;
+      if (match) visible += 1;
+    }
+
+    if (empty) empty.hidden = visible > 0;
+    if (status) status.textContent = raw ? `${visible} reference(s) match “${raw}”` : '';
+  });
+</script>
