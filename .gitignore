@@ -28,8 +28,11 @@ Thumbs.db
 desktop.ini
 
 # editor / tooling caches
-.vscode/*
-!.vscode/extensions.json
+# .vscode is committed on purpose: it pins the workspace TypeScript and the
+# Biome formatter so the editor matches what `npm run check` / `lint` do.
+# Only genuinely per-user files are ignored.
+.vscode/*.log
+.history/
 .idea/
 *.swp
 .cache/

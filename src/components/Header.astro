@@ -68,13 +68,14 @@ function isActive(href: string): boolean {
     </button>
   </div>
 
-  {/* Mobile panel. Hidden from assistive tech and keyboard while collapsed. */}
+  {/* Mobile panel. Absolutely positioned so it overlays the page rather than
+      pushing it down. Hidden from assistive tech and keyboard while collapsed. */}
   <nav
     id="mobile-nav"
     aria-label="Main"
     data-mobile-nav
     hidden
-    class="border-t border-ink-800 bg-ink-950/95 sm:hidden"
+    class="absolute inset-x-0 top-full bg-ink-950/99 shadow-lg shadow-ink-950/50 backdrop-blur sm:hidden"
   >
     <ul class="page-shell max-w-6xl py-2">
       {

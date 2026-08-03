@@ -74,9 +74,15 @@ changes only when re-syncing with a newer upstream version.
 
 ## Stack
 
-- **Astro 5** — static output, content collections, zero framework runtime
+- **Astro 7** — static output, content collections, zero framework runtime
 - **Tailwind CSS 4** — via `@tailwindcss/vite`, theme tokens in `src/styles/global.css`
-- **Biome** — lint + format
+- **Biome 2** — lint + format
+- **TypeScript 6** — deliberately not 7, see below
+
+> **Do not upgrade to TypeScript 7.** TS 7 is the native compiler and does not yet expose the
+> programmatic API that `astro check` depends on, so `npm run check` fails outright with it.
+> Track [withastro/roadmap#1321](https://github.com/withastro/roadmap/discussions/1321) and bump
+> once `@astrojs/check` supports it.
 
 `.astro` files have `noUnusedVariables` / `noUnusedImports` / `noNonNullAssertion` disabled in
 `biome.json`, because Biome parses Astro frontmatter but not the template that consumes it.

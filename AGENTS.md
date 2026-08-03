@@ -109,11 +109,16 @@ must complete.
   the template that uses those variables, so they are false positives. Do not "clean up" variables
   in `.astro` frontmatter on Biome's say-so; check the template first.
 - Path alias `@/*` → `src/*`.
+- **TypeScript is pinned to 6.x on purpose.** TS 7 (the native compiler) does not yet expose the
+  programmatic API `astro check` needs, so `npm run check` fails outright on it. Do not bump to 7
+  until `@astrojs/check` declares support.
 
 ## Gotchas
 
-- `astro.config.mjs` sets `smartypants: false`. Season bodies contain raw inline HTML that
-  smart-quote transformation mangles. Leave it off.
+- `astro.config.mjs` disables smart punctuation via
+  `processor: satteri({ features: { smartPunctuation: false } })` (the Astro 7 replacement for the
+  old `markdown.smartypants` flag). Season bodies contain raw inline HTML that smart-quote
+  transformation mangles. Leave it off.
 - Season slugs come from the title (`Season 16 Part 1-2` → `season-16-part-1-2`). The splitter
   de-duplicates colliding slugs with a numeric suffix.
 - Season ordering is by the `order` frontmatter field (source document order), not by date —
