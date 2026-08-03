@@ -82,6 +82,41 @@ export function groupSeasons(seasons: Season[]): SeasonGroup[] {
   return [...groups.values()];
 }
 
+/** True for the release that is still running — `…` as its end date in source.md. */
+export function isOngoing(season: Season): boolean {
+  return season.data.endDate.trim() === '…';
+}
+
+/**
+ * Year span an era covers, as a display string: `2001` for a single year,
+ * `2001—05` for a range. Derived from the releases themselves, so it stays
+ * correct when the source document gains or loses parts.
+ */
+export function groupYears(group: SeasonGroup): string {
+  const years = group.seasons.map(startYear).filter((year): year is number => year !== null);
+  if (years.length === 0) return '';
+
+  const first = Math.min(...years);
+  const last = Math.max(...endYears(group), ...years);
+  if (first === last) return String(first);
+
+  // Two-digit tail unless the century turns, where it would read ambiguously.
+  const tail = Math.floor(first / 100) === Math.floor(last / 100) ? String(last).slice(2) : last;
+  return `${first}—${tail}`;
+}
+
+/** End years of a group's releases, ignoring the ongoing `…` and unparseable dates. */
+function endYears(group: SeasonGroup): number[] {
+  return group.seasons
+    .map((season) => Number.parseInt(season.data.endDate.split('.')[2] ?? '', 10))
+    .filter((year) => !Number.isNaN(year));
+}
+
+/** Total changelog entries across an era's releases. */
+export function groupEntryCount(group: SeasonGroup): number {
+  return group.seasons.reduce((sum, season) => sum + season.data.entryCount, 0);
+}
+
 /** `12.02.2001` -> `12 Feb 2001`, preserving `??` wildcards from the source. */
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 

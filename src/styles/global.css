@@ -208,16 +208,31 @@
     }
   }
 
+  /* `--marker-weight` (0.45–1) is the era's share of the busiest era's entry
+     count, set inline on the home page. It scales the diamond so heavier eras
+     read as heavier while scrolling. Unset — anywhere else the marker is
+     reused — it falls back to full size. */
   .timeline-marker {
+    --marker-weight: 1;
     position: absolute;
-    top: 0.35rem;
+    /* Anchored by its centre on the heading's cap height, so growing the
+       diamond expands it evenly instead of pushing it down the rail. */
+    top: 0.7rem;
     left: calc(var(--rail-gutter) * -1);
-    width: 0.7rem;
-    height: 0.7rem;
-    translate: -50% 0;
+    width: calc(0.5rem + 0.75rem * var(--marker-weight));
+    height: calc(0.5rem + 0.75rem * var(--marker-weight));
+    translate: -50% -50%;
     rotate: 45deg;
     border: 1px solid var(--color-ember-500);
     background-color: var(--color-ink-950);
+  }
+
+  /* The release that is still running. Filled rather than hollow, with a halo,
+     so the end of the rail is findable at a glance. */
+  .timeline-marker-current {
+    background-color: var(--color-ember-400);
+    border-color: var(--color-ember-300);
+    box-shadow: 0 0 0 4px rgba(200, 150, 60, 0.18);
   }
 
   /* Search-result term highlighting. */
