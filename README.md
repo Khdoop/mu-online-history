@@ -51,12 +51,14 @@ will be actioned.
 | --- | --- |
 | `src/content/seasons/*.md` | one file per season, frontmatter + `##` patch headings |
 | `src/data/references.json` | `[{ id, url, label, notes[] }]` |
+| `src/data/search-index.json` | one record per changelog bullet, for search on `/seasons` |
 
 The inline `<sup><a id="citeN">…` markup is rewritten to `<mu-cite data-refs="5,42">`, which
 `src/components/Citations.astro` hydrates into links pointing at `/references#ref-N`.
 
-**Both outputs are generated and git-ignored.** Never edit `src/content/seasons/` or
-`src/data/references.json` by hand — they are overwritten on every build.
+**All three outputs are generated and git-ignored**, written by a single run of the splitter that
+`dev` and `build` invoke before Astro starts. Never edit them by hand — they are overwritten on
+every build.
 
 `source.md` itself is vendored upstream content (see [Credits](#credits)). Corrections to the
 *history* go to [MuHistory](https://github.com/AlighieriDemiurgs/MuHistory); locally, `source.md`

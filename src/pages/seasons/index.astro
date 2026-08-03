@@ -4,41 +4,58 @@ import { formatRange, getSeasons, groupSeasons } from '@/lib/seasons';
 
 const seasons = await getSeasons();
 const groups = groupSeasons(seasons);
+
+const totalEntries = seasons.reduce((sum, season) => sum + season.data.entryCount, 0);
 ---
 
 <BaseLayout
   title="Seasons"
-  description="Every MU Online release from Season 0 to the present, with dates and entry counts."
+  description="Every MU Online release from Season 0 to the present. Search the full changelog by keyword."
 >
   <div class="page-shell max-w-6xl py-10 sm:py-12">
     <h1 class="font-display text-2xl font-bold text-ink-100 sm:text-4xl">All seasons</h1>
     <p class="mt-3 max-w-2xl text-sm text-ink-400">
-      {seasons.length} releases, grouped by era. Use the filter to jump straight to a season.
+      {seasons.length} releases, grouped by era. Search below to look through all {totalEntries}
+      changelog entries at once.
     </p>
 
     <div class="mt-8">
-      <label for="season-filter" class="sr-only">Filter seasons</label>
-      <input
-        id="season-filter"
-        type="search"
-        placeholder="Filter by name or year…"
-        autocomplete="off"
-        class="w-full max-w-md rounded border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-sm text-ink-100 placeholder:text-ink-400 focus:border-ember-500 focus:outline-none"
-      />
-      <p id="filter-status" role="status" class="mt-2 h-4 text-xs text-ink-400"></p>
+      <label for="season-search" class="sr-only">Search seasons and changelog entries</label>
+      <div class="relative max-w-xl">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+          class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400"
+        >
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m20 20-3.5-3.5"></path>
+        </svg>
+        <input
+          id="season-search"
+          type="search"
+          placeholder="Search items, maps, events, skills…"
+          autocomplete="off"
+          class="w-full rounded border border-ink-700 bg-ink-900 py-2.5 pl-9 pr-3.5 text-sm text-ink-100 placeholder:text-ink-400 focus:border-ember-500 focus:outline-none"
+        />
+      </div>
+      <p id="search-status" role="status" aria-live="polite" class="mt-2 h-4 text-xs text-ink-400">
+      </p>
     </div>
 
-    <div class="mt-6 space-y-10" data-season-list>
+    {/* Default view: browse every season by era. Hidden once a query is typed. */}
+    <div class="mt-6 space-y-10" data-browse>
       {
         groups.map((group) => (
           <section data-group>
             <h2 class="font-display text-lg font-semibold text-ember-300">{group.label}</h2>
             <ul class="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
               {group.seasons.map((season) => (
-                <li
-                  data-season
-                  data-search={`${season.data.title} ${season.data.range}`.toLowerCase()}
-                >
+                <li data-season data-title={`${season.data.title} ${season.data.range}`.toLowerCase()}>
                   <a
                     href={`/seasons/${season.id}`}
                     class="group block h-full rounded border border-ink-800 bg-ink-900/50 p-4 transition-colors hover:border-ember-500/50 hover:bg-ink-850"
@@ -60,36 +77,142 @@ const groups = groupSeasons(seasons);
       }
     </div>
 
-    <p data-empty hidden class="mt-8 text-sm text-ink-400">No seasons match that filter.</p>
+    {/* Full-text results, rendered client-side from the generated index. */}
+    <div class="mt-6" data-results hidden>
+      <ol class="space-y-2" data-results-list></ol>
+      <p data-empty hidden class="py-8 text-sm text-ink-400">
+        No entries match that search.
+      </p>
+    </div>
   </div>
 </BaseLayout>
 
 <script>
-  const input = document.querySelector<HTMLInputElement>('#season-filter');
-  const status = document.querySelector<HTMLElement>('#filter-status');
-  const empty = document.querySelector<HTMLElement>('[data-empty]');
-  const groups = [...document.querySelectorAll<HTMLElement>('[data-group]')];
+  import searchIndex from '@/data/search-index.json';
 
-  function applyFilter(rawQuery: string) {
-    const query = rawQuery.trim().toLowerCase();
-    let visible = 0;
-
-    for (const group of groups) {
-      let groupVisible = 0;
-
-      for (const item of group.querySelectorAll<HTMLElement>('[data-season]')) {
-        const match = !query || (item.dataset.search ?? '').includes(query);
-        item.hidden = !match;
-        if (match) groupVisible += 1;
-      }
-
-      group.hidden = groupVisible === 0;
-      visible += groupVisible;
-    }
-
-    if (empty) empty.hidden = visible > 0;
-    if (status) status.textContent = query ? `${visible} season(s) match “${rawQuery.trim()}”` : '';
+  interface Entry {
+    /** entry text */ t: string;
+    /** nested notes */ n?: string[];
+    /** patch heading */ h?: string;
+    /** heading anchor */ a?: string;
+    /** season slug */ s: string;
+    /** season title */ st: string;
+    /** season start date */ d: string;
   }
 
-  input?.addEventListener('input', () => applyFilter(input.value));
+  const entries = searchIndex as Entry[];
+
+  const inputEl = document.querySelector<HTMLInputElement>('#season-search');
+  const statusEl = document.querySelector<HTMLElement>('#search-status');
+  const browseEl = document.querySelector<HTMLElement>('[data-browse]');
+  const resultsEl = document.querySelector<HTMLElement>('[data-results]');
+  const listEl = document.querySelector<HTMLElement>('[data-results-list]');
+  const emptyEl = document.querySelector<HTMLElement>('[data-empty]');
+  const seasonCards = [...document.querySelectorAll<HTMLElement>('[data-season]')];
+  const groups = [...document.querySelectorAll<HTMLElement>('[data-group]')];
+
+  if (inputEl && browseEl && resultsEl && listEl && emptyEl && statusEl) {
+    // Narrowed aliases so the closures below keep the non-null types.
+    const input = inputEl;
+    const status = statusEl;
+    const browse = browseEl;
+    const results = resultsEl;
+    const list = listEl;
+    const empty = emptyEl;
+
+    // Precomputed haystacks so each keystroke is a plain substring scan.
+    const haystacks = entries.map((entry) =>
+      `${entry.t} ${entry.n?.join(' ') ?? ''} ${entry.h ?? ''} ${entry.st}`.toLowerCase(),
+    );
+
+    const escapeHtml = (value: string) =>
+      value.replace(
+        /[&<>"']/g,
+        (char) =>
+          ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char] as string,
+      );
+
+    /** Wraps every occurrence of the query in a <mark>. */
+    const highlight = (text: string, query: string) => {
+      const safe = escapeHtml(text);
+      if (!query) return safe;
+      const pattern = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return safe.replace(new RegExp(pattern, 'gi'), (match) => `<mark>${match}</mark>`);
+    };
+
+    const MAX_RESULTS = 200;
+
+    function render(query: string) {
+      const needle = query.trim().toLowerCase();
+
+      // Empty query restores the plain season browser.
+      if (!needle) {
+        browse.hidden = false;
+        results.hidden = true;
+        list.replaceChildren();
+        status.textContent = '';
+        for (const card of seasonCards) card.hidden = false;
+        for (const group of groups) group.hidden = false;
+        return;
+      }
+
+      browse.hidden = true;
+      results.hidden = false;
+
+      const matches: Entry[] = [];
+      for (let i = 0; i < entries.length; i += 1) {
+        if (haystacks[i]!.includes(needle)) matches.push(entries[i]!);
+      }
+
+      // Whole-word hits first — "Kalima" should outrank "…Kalimas…".
+      const word = new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
+      matches.sort((a, b) => Number(word.test(b.t)) - Number(word.test(a.t)));
+
+      const shown = matches.slice(0, MAX_RESULTS);
+
+      list.replaceChildren(
+        ...shown.map((entry) => {
+          const li = document.createElement('li');
+          const href = `/seasons/${entry.s}/${entry.a ? `#${entry.a}` : ''}`;
+
+          li.innerHTML = `
+            <a href="${href}"
+               class="block rounded border border-ink-800 bg-ink-900/50 p-4 transition-colors hover:border-ember-500/50 hover:bg-ink-850">
+              <p class="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs">
+                <span class="font-display font-semibold text-ember-300">${escapeHtml(entry.st)}</span>
+                ${entry.h ? `<span class="font-mono text-ink-400">${highlight(entry.h, needle)}</span>` : ''}
+              </p>
+              <p class="mt-2 text-sm leading-relaxed text-ink-200">${highlight(entry.t, needle)}</p>
+              ${
+                entry.n?.some((note) => note.toLowerCase().includes(needle))
+                  ? `<p class="mt-2 border-l-2 border-ink-700 pl-3 text-xs leading-relaxed text-ink-400">${highlight(
+                      entry.n.find((note) => note.toLowerCase().includes(needle)) ?? '',
+                      needle,
+                    )}</p>`
+                  : ''
+              }
+            </a>`;
+          return li;
+        }),
+      );
+
+      empty.hidden = matches.length > 0;
+
+      const seasonCount = new Set(shown.map((entry) => entry.s)).size;
+      status.textContent = matches.length
+        ? `${matches.length} ${matches.length === 1 ? 'entry' : 'entries'} across ${seasonCount} ${
+            seasonCount === 1 ? 'season' : 'seasons'
+          }${matches.length > MAX_RESULTS ? ` — showing first ${MAX_RESULTS}` : ''}`
+        : 'No matches';
+    }
+
+    input.addEventListener('input', () => render(input.value));
+
+    // Deep-linkable: /seasons?q=kalima
+    const initial = new URLSearchParams(window.location.search).get('q');
+    if (initial) {
+      input.value = initial;
+      render(initial);
+    }
+  }
 </script>

@@ -181,6 +181,14 @@
     background-color: var(--color-ink-950);
   }
 
+  /* Search-result term highlighting. */
+  mark {
+    background-color: rgba(200, 150, 60, 0.22);
+    color: var(--color-ember-300);
+    border-radius: 2px;
+    padding: 0 0.1em;
+  }
+
   /* Hamburger icon that morphs into a close (×) when its button is open. */
   .menu-icon {
     display: grid;

@@ -13,9 +13,11 @@
  *   1. <a id="refN"></a>[^](#citeN) https://...
  *   - optional note bullet belonging to the previous reference
  *
- * Output:
+ * Output (all git-ignored — regenerated on every dev/build):
  *   src/content/seasons/<slug>.md   frontmatter + cleaned body
  *   src/data/references.json        [{ id, url, notes[] }]
+ *   src/data/search-index.json      one record per changelog bullet, for the
+ *                                   client-side search on /seasons
  *
  * The transform is deterministic and idempotent: running it twice produces
  * identical output, so it is safe to call from `dev` and `build`.
@@ -176,6 +178,77 @@ function yamlString(value) {
   return `'${String(value).replace(/'/g, "''")}'`;
 }
 
+/**
+ * Reproduces the heading slug Astro generates for `##` headings, so search
+ * results can deep-link to the exact patch (`/seasons/<slug>/#<headingSlug>`).
+ * Verified against built output: `0.34 aka 0.34.0 (03.08.2001)` -> `034-aka-0340-03082001`.
+ */
+function headingSlug(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
+/** Strips markdown/HTML down to the plain sentence a reader sees. */
+function toPlainText(line) {
+  return line
+    .replace(/<mu-cite[^>]*><\/mu-cite>/g, '')
+    .replace(/<sup>(.*?)<\/sup>/g, '$1')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/`(.*?)`/g, '$1')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Flattens every changelog bullet into a searchable record. Nested notes are
+ * folded into their parent entry rather than listed separately — they are
+ * clarifications, not standalone facts.
+ */
+function buildSearchEntries(season, slug, blocks) {
+  const entries = [];
+
+  for (const block of blocks) {
+    const heading = block.heading ? block.heading.replace(/:\s*$/, '') : '';
+    const anchor = heading ? headingSlug(heading) : '';
+    let current = null;
+
+    for (const raw of block.lines) {
+      const top = raw.match(/^-\s+(.*)$/);
+      if (top) {
+        current = {
+          text: toPlainText(top[1]),
+          notes: [],
+        };
+        if (current.text) entries.push({ ...current, heading, anchor, ref: entries.length });
+        continue;
+      }
+
+      const nested = raw.match(/^\s+-\s+(.*)$/);
+      if (nested && entries.length > 0) {
+        const note = toPlainText(nested[1]);
+        if (note) entries[entries.length - 1].notes.push(note);
+      }
+    }
+  }
+
+  return entries.map((entry) => ({
+    t: entry.text,
+    // Notes are searchable but rendered only as extra context.
+    n: entry.notes.length ? entry.notes : undefined,
+    h: entry.heading || undefined,
+    a: entry.anchor || undefined,
+    s: slug,
+    st: season.title,
+    d: season.startDate,
+  }));
+}
+
 async function main() {
   const raw = await readFile(SOURCE, 'utf8');
   const lines = raw.split(/\r?\n/);
@@ -215,6 +288,7 @@ async function main() {
   await mkdir(DATA_DIR, { recursive: true });
 
   const seen = new Map();
+  const searchEntries = [];
 
   for (const [index, season] of seasons.entries()) {
     // Guard against two seasons slugifying to the same file name.
@@ -243,7 +317,12 @@ async function main() {
     ].join('\n');
 
     await writeFile(join(SEASONS_DIR, `${slug}.md`), frontmatter + body, 'utf8');
+
+    searchEntries.push(...buildSearchEntries(season, slug, blocks));
   }
+
+  // Minified on purpose: this file is fetched by the browser, not read by hand.
+  await writeFile(join(DATA_DIR, 'search-index.json'), JSON.stringify(searchEntries), 'utf8');
 
   await writeFile(
     join(DATA_DIR, 'references.json'),
@@ -252,7 +331,8 @@ async function main() {
   );
 
   console.log(
-    `Generated ${seasons.length} season files and ${references.length} references from source.md`,
+    `Generated ${seasons.length} season files, ${references.length} references and ` +
+      `${searchEntries.length} search entries from source.md`,
   );
 }
 

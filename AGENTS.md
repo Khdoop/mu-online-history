@@ -18,8 +18,8 @@ newer upstream version.
 
 ## The one rule that matters
 
-**`source.md` is the single source of truth. Everything under `src/content/seasons/` and
-`src/data/references.json` is generated and git-ignored.**
+**`source.md` is the single source of truth. Everything under `src/content/seasons/`,
+`src/data/references.json` and `src/data/search-index.json` is generated and git-ignored.**
 
 Never edit generated files. If you edit one, your change is silently destroyed the next time anyone
 builds.
@@ -34,9 +34,10 @@ with a newer upstream version.
 
 ```
 source.md                      research document (hand-maintained, 2,100+ lines)
-  └─ scripts/split-source.mjs  runs on every dev/build
-       ├─ src/content/seasons/*.md    one file per season   (generated, ignored)
-       └─ src/data/references.json    [{id,url,label,notes}] (generated, ignored)
+  └─ scripts/split-source.mjs  runs on every dev/build — writes all three outputs
+       ├─ src/content/seasons/*.md     one file per season    (generated, ignored)
+       ├─ src/data/references.json     [{id,url,label,notes}] (generated, ignored)
+       └─ src/data/search-index.json   one record per bullet  (generated, ignored)
 
 src/content.config.ts    Zod schema for the seasons collection
 src/lib/seasons.ts       season loading, grouping, date formatting, source labels

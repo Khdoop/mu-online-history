@@ -2,9 +2,11 @@
 dist/
 .astro/
 
-# generated content (derived from source.md via scripts/split-source.mjs)
+# generated content — all three are written by one run of
+# scripts/split-source.mjs, which `dev` and `build` invoke before Astro starts.
 src/content/seasons/
 src/data/references.json
+src/data/search-index.json
 
 # dependencies
 node_modules/
