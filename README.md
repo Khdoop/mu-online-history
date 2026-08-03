@@ -113,7 +113,7 @@ Vercel warn that the build will silently jump to the next Node major when one sh
 
 Nothing else is needed on the host: `npm run build` regenerates the content from `source.md` before
 building, so the git-ignored generated files are recreated on every deploy. The output is fully
-static (83 prerendered pages, ~1.4 MB) — no SSR, no serverless functions, no image optimization.
+static (105 prerendered pages, ~2.7 MB) — no SSR, no serverless functions, no image optimization.
 
 Live at **<https://mu-online-history.vercel.app>**.
 
@@ -129,6 +129,7 @@ the generated sitemap. If the domain ever changes, update it there **and** in
 - `/` — hero stats and the era-grouped timeline
 - `/seasons` — filterable index of every release
 - `/seasons/<slug>` — one season, with a patch table of contents and prev/next navigation
+- `/seasons/era/<slug>` — every release of one era (e.g. all of `Season 15`) merged onto one page
 - `/references` — all 435 sources, filterable, each listing the seasons that cite it
 - `/about` — sourcing methodology
 
