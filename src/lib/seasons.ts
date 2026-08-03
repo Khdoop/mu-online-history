@@ -37,7 +37,33 @@ export interface SeasonGroup {
 
 export function groupSeasonKey(title: string): string {
   const match = title.match(/^Season\s+([\dX]+)/i);
-  return match ? `Season ${match[1]}` : title;
+  if (match) return `Season ${match[1]}`;
+
+  // eX700/eX701/eX702 are three peer releases in source.md, occupying the slot
+  // where a Season 7 would have been. They are grouped under the eX700 name
+  // because that is what Webzen and the community call the generation as a
+  // whole — 701 and 702 built directly on it.
+  if (/^eX\d/i.test(title)) return 'eX700';
+
+  return title;
+}
+
+/**
+ * Era a release belongs to.
+ *
+ * An alias of `groupSeasonKey`: the index grouping, the season page's sibling
+ * sidebar and the `/seasons/era/*` routes must all agree on what an era is, or
+ * headings end up linking to pages that were never built. Kept as a named export
+ * so era-specific call sites read clearly at their use site.
+ */
+export const seasonEraKey = groupSeasonKey;
+
+/** `Season 15` -> `season-15`, for the era overview route. */
+export function seasonEraSlug(label: string): string {
+  return label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 export function groupSeasons(seasons: Season[]): SeasonGroup[] {

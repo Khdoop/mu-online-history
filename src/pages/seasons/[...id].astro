@@ -3,7 +3,7 @@ import { render } from 'astro:content';
 import type { GetStaticPaths } from 'astro';
 import Citations from '@/components/Citations.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { formatRange, getSeasons, type Season } from '@/lib/seasons';
+import { formatRange, getSeasons, type Season, seasonEraKey, seasonEraSlug } from '@/lib/seasons';
 
 export const getStaticPaths = (async () => {
   const seasons = await getSeasons();
@@ -14,6 +14,15 @@ export const getStaticPaths = (async () => {
       season,
       prev: seasons[index - 1] ?? null,
       next: seasons[index + 1] ?? null,
+      // Other releases in the same era, e.g. every `Season 15 Part *`. Only 13
+      // of 78 seasons carry patch headings, so this is what the sidebar falls
+      // back to rather than standing empty.
+      siblings: seasons.filter(
+        (other) =>
+          other.id !== season.id &&
+          seasonEraKey(other.data.title) === seasonEraKey(season.data.title),
+      ),
+      eraLabel: seasonEraKey(season.data.title),
     },
   }));
 }) satisfies GetStaticPaths;
@@ -22,9 +31,11 @@ interface Props {
   season: Season;
   prev: Season | null;
   next: Season | null;
+  siblings: Season[];
+  eraLabel: string;
 }
 
-const { season, prev, next } = Astro.props;
+const { season, prev, next, siblings, eraLabel } = Astro.props;
 const { Content, headings } = await render(season);
 
 // Only `##` headings exist in generated season bodies — one per patch.
@@ -65,45 +76,88 @@ const patches = headings.filter((heading) => heading.depth === 2);
         <Content />
       </div>
 
-      {/* Patch list is collapsed on phones, where a tall nested scroll area would
-          push the actual content far down the page. Forced open from `lg` up by
-          the `lg:*` rules on `.patch-toc`. */}
-      {
-        patches.length > 0 && (
-          <aside class="patch-toc order-first mb-8 lg:order-0 lg:mb-0">
-            <details
-              open
-              class="group rounded border border-ink-800 lg:sticky lg:top-24 lg:rounded-none lg:border-0"
-            >
-              <summary
-                class="flex cursor-pointer list-none items-center justify-between gap-2 p-3 font-mono text-xs uppercase tracking-wider text-ink-400 lg:cursor-default lg:p-0"
-              >
-                <span>Patches in this season ({patches.length})</span>
-                <span
-                  class="text-ink-400 transition-transform group-open:rotate-180 lg:hidden"
-                  aria-hidden="true"
+      {/* Sidebar. Only 13 of 78 seasons carry patch headings, so an empty rail
+          is the common case rather than the exception — a "(0)" label would be
+          a permanent zero-state on most pages. Instead the patch list appears
+          where it exists, and otherwise the slot is given to the sibling
+          releases of the same era, which is real navigation. The era link below
+          is always present, so the rail is never empty. */}
+      <aside class="patch-toc order-first mb-8 lg:order-0 lg:mb-0">
+        <div class="lg:sticky lg:top-24">
+          {
+            patches.length > 0 ? (
+                /* Collapsed on phones, where a tall nested scroll area would push
+                   the actual content far down the page. Forced open from `lg` up
+                   by the `lg:*` rules on `.patch-toc`. */
+                <details
+                  open
+                  class="group rounded border border-ink-800 lg:rounded-none lg:border-0"
                 >
-                  ▾
-                </span>
-              </summary>
-              <ul
-                class="max-h-[60vh] space-y-1 overflow-y-auto border-t border-ink-800 px-3 pb-3 pt-2 text-xs lg:mt-3 lg:max-h-[70vh] lg:border-l lg:border-t-0 lg:px-0 lg:pb-0 lg:pl-3"
-              >
-                {patches.map((patch) => (
-                  <li>
-                    <a
-                      href={`#${patch.slug}`}
-                      class="block rounded py-1 text-ink-400 transition-colors hover:text-ember-300"
+                  <summary class="flex cursor-pointer list-none items-center justify-between gap-2 p-3 font-mono text-xs uppercase tracking-wider text-ink-400 lg:cursor-default lg:p-0">
+                    <span>Patches in this season ({patches.length})</span>
+                    <span
+                      class="text-ink-400 transition-transform group-open:rotate-180 lg:hidden"
+                      aria-hidden="true"
                     >
-                      {patch.text}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          </aside>
-        )
-      }
+                      ▾
+                    </span>
+                  </summary>
+                  <ul class="max-h-[60vh] space-y-1 overflow-y-auto border-t border-ink-800 px-3 pb-3 pt-2 text-xs lg:mt-3 lg:max-h-[70vh] lg:border-l lg:border-t-0 lg:px-0 lg:pb-0 lg:pl-3">
+                    {patches.map((patch) => (
+                      <li>
+                        <a
+                          href={`#${patch.slug}`}
+                          class="block rounded py-1 text-ink-400 transition-colors hover:text-ember-300"
+                        >
+                          {patch.text}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+            ) : siblings.length > 0 ? (
+              <nav
+                aria-label={`Other ${eraLabel} releases`}
+                class="rounded border border-ink-800 p-3 lg:rounded-none lg:border-0 lg:p-0"
+              >
+                <p class="font-mono text-xs uppercase tracking-wider text-ink-400">
+                  More in {eraLabel}
+                </p>
+                <ul class="mt-3 space-y-1 border-ink-800 text-xs lg:border-l lg:pl-3">
+                  {siblings.map((sibling) => (
+                    <li>
+                      <a
+                        href={`/seasons/${sibling.id}`}
+                        class="block rounded py-1 text-ink-400 transition-colors hover:text-ember-300"
+                      >
+                        {sibling.data.title}
+                        <span class="mt-0.5 block font-mono text-[0.68rem] text-ink-400/70">
+                          {sibling.data.entryCount} entries
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            ) : null
+          }
+
+          {/* Always offered, including on pages that show the patch TOC —
+              otherwise those releases have no route to the combined view. */}
+          <a
+            href={`/seasons/era/${seasonEraSlug(eraLabel)}`}
+            class="group/era mt-4 flex items-center gap-1.5 border-t border-ink-800 px-3 pt-3 font-mono text-xs text-ink-400 transition-colors hover:text-ember-300 lg:mt-5 lg:px-0 lg:pt-4"
+          >
+            <span>All of {eraLabel} on one page</span>
+            <span
+              aria-hidden="true"
+              class="leading-none opacity-0 transition-all group-hover/era:translate-x-0.5 group-hover/era:opacity-100 group-focus-visible/era:translate-x-0.5 group-focus-visible/era:opacity-100"
+            >
+              →
+            </span>
+          </a>
+        </div>
+      </aside>
     </div>
 
     <nav

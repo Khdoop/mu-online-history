@@ -1,6 +1,13 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { formatRange, getSeasons, groupSeasons, references, startYear } from '@/lib/seasons';
+import {
+  formatRange,
+  getSeasons,
+  groupSeasons,
+  references,
+  seasonEraSlug,
+  startYear,
+} from '@/lib/seasons';
 
 const seasons = await getSeasons();
 const groups = groupSeasons(seasons);
@@ -79,8 +86,20 @@ const stats = [
         groups.map((group) => (
           <li class="relative">
             <span class="timeline-marker" aria-hidden="true" />
-            <h3 class="font-display text-base font-semibold text-ember-300 sm:text-lg">
-              {group.label}
+            <h3 class="font-display text-base font-semibold sm:text-lg">
+              <a
+                href={`/seasons/era/${seasonEraSlug(group.label)}`}
+                class="group/era inline-flex items-center gap-1.5 text-ember-300 transition-colors hover:text-ember-400"
+              >
+                {group.label}
+                <span
+                  aria-hidden="true"
+                  class="text-[0.8em] leading-none opacity-0 transition-all group-hover/era:translate-x-0.5 group-hover/era:opacity-100 group-focus-visible/era:translate-x-0.5 group-focus-visible/era:opacity-100"
+                >
+                  →
+                </span>
+                <span class="sr-only">— view combined overview</span>
+              </a>
             </h3>
             <ul class="mt-3 grid gap-2 sm:grid-cols-2">
               {group.seasons.map((season) => (

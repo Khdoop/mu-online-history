@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { formatRange, getSeasons, groupSeasons } from '@/lib/seasons';
+import { formatRange, getSeasons, groupSeasons, seasonEraSlug } from '@/lib/seasons';
 
 const seasons = await getSeasons();
 const groups = groupSeasons(seasons);
@@ -52,7 +52,24 @@ const totalEntries = seasons.reduce((sum, season) => sum + season.data.entryCoun
       {
         groups.map((group) => (
           <section data-group>
-            <h2 class="font-display text-lg font-semibold text-ember-300">{group.label}</h2>
+            {/* The era heading doubles as the link to that era's combined
+                overview. The arrow only appears on hover/focus so the headings
+                stay clean while scanning, matching the card hover pattern. */}
+            <h2 class="font-display text-lg font-semibold">
+              <a
+                href={`/seasons/era/${seasonEraSlug(group.label)}`}
+                class="group/era inline-flex items-center gap-1.5 text-ember-300 transition-colors hover:text-ember-400"
+              >
+                {group.label}
+                <span
+                  aria-hidden="true"
+                  class="text-[0.8em] leading-none opacity-0 transition-all group-hover/era:translate-x-0.5 group-hover/era:opacity-100 group-focus-visible/era:translate-x-0.5 group-focus-visible/era:opacity-100"
+                >
+                  →
+                </span>
+                <span class="sr-only">— view combined overview</span>
+              </a>
+            </h2>
             <ul class="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
               {group.seasons.map((season) => (
                 <li data-season data-title={`${season.data.title} ${season.data.range}`.toLowerCase()}>

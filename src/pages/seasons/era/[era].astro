@@ -1,0 +1,192 @@
+---
+import { render } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
+import Citations from '@/components/Citations.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatRange, getSeasons, type Season, seasonEraKey, seasonEraSlug } from '@/lib/seasons';
+
+export const getStaticPaths = (async () => {
+  const seasons = await getSeasons();
+
+  // Group by era, preserving the chronological order getSeasons() guarantees.
+  const eras = new Map<string, Season[]>();
+  for (const season of seasons) {
+    const key = seasonEraKey(season.data.title);
+    eras.set(key, [...(eras.get(key) ?? []), season]);
+  }
+
+  // Insertion order follows getSeasons()'s chronological sort, so neighbouring
+  // entries are the chronologically adjacent eras — not the alphabetical ones,
+  // which would put `Season 2` next to `Season 20`.
+  const ordered = [...eras.entries()];
+
+  return ordered.map(([label, releases], index) => {
+    const prevEra = ordered[index - 1];
+    const nextEra = ordered[index + 1];
+
+    return {
+      params: { era: seasonEraSlug(label) },
+      props: {
+        label,
+        releases,
+        prev: prevEra ? { label: prevEra[0], slug: seasonEraSlug(prevEra[0]) } : null,
+        next: nextEra ? { label: nextEra[0], slug: seasonEraSlug(nextEra[0]) } : null,
+      },
+    };
+  });
+}) satisfies GetStaticPaths;
+
+interface EraLink {
+  label: string;
+  slug: string;
+}
+
+interface Props {
+  label: string;
+  releases: Season[];
+  prev: EraLink | null;
+  next: EraLink | null;
+}
+
+const { label, releases, prev, next } = Astro.props;
+
+// Every release body is rendered inline, so the whole era reads as one
+// document. `render()` is async, hence resolving them all up front.
+const rendered = await Promise.all(
+  releases.map(async (release) => ({
+    release,
+    Content: (await render(release)).Content,
+  })),
+);
+
+const totalEntries = releases.reduce((sum, release) => sum + release.data.entryCount, 0);
+const totalPatches = releases.reduce((sum, release) => sum + release.data.patchCount, 0);
+
+// Union of every source cited anywhere in the era, for the citation popovers.
+const citedRefs = [...new Set(releases.flatMap((release) => release.data.citedRefs))];
+
+const first = releases[0]!;
+const last = releases[releases.length - 1]!;
+const range =
+  releases.length > 1 ? `${formatRange(first)} — ${formatRange(last)}` : formatRange(first);
+---
+
+<BaseLayout
+  title={`${label} overview`}
+  description={`Every documented change in MU Online ${label}: ${totalEntries} entries across ${releases.length} release${releases.length === 1 ? '' : 's'}, with sources.`}
+>
+  <article class="page-shell max-w-6xl py-10 sm:py-12">
+    <nav aria-label="Breadcrumb" class="mb-6 text-xs text-ink-400">
+      <a href="/seasons" class="hover:text-ember-300">Seasons</a>
+      <span aria-hidden="true" class="mx-1.5">/</span>
+      <span class="text-ink-300">{label}</span>
+    </nav>
+
+    <header class="border-b border-ink-800 pb-6 sm:pb-8">
+      <h1 class="font-display text-2xl font-bold leading-tight text-ink-100 sm:text-5xl">
+        {label}
+      </h1>
+      <p class="mt-3 font-mono text-xs text-ember-400 sm:text-sm">{range}</p>
+      <ul class="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-ink-400 sm:mt-5 sm:gap-x-5">
+        <li>{releases.length} {releases.length === 1 ? 'release' : 'releases'}</li>
+        <li>{totalEntries} changelog entries</li>
+        {totalPatches > 0 && <li>{totalPatches} patches</li>}
+        <li>{citedRefs.length} distinct sources</li>
+      </ul>
+      <p class="mt-4 text-xs leading-relaxed text-ink-400">
+        Everything documented for this era on one page. Each release below also has its own page.
+      </p>
+    </header>
+
+    <div class="mt-10 gap-12 lg:grid lg:grid-cols-[minmax(0,1fr)_16rem]">
+      <div class="min-w-0 space-y-10">
+        {
+          rendered.map(({ release, Content }) => (
+            <section id={release.id} class="scroll-mt-24">
+              {/* Each release keeps its own heading and link out, so the merged
+                  page never obscures which release a change belongs to. */}
+              <div class="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <h2 class="font-display text-lg font-semibold text-ember-300 sm:text-xl">
+                  {release.data.title}
+                </h2>
+                <a
+                  href={`/seasons/${release.id}`}
+                  class="font-mono text-xs text-ink-400 underline underline-offset-2 transition-colors hover:text-ember-300"
+                >
+                  open release page
+                </a>
+              </div>
+              <p class="mb-4 font-mono text-xs text-ink-400">
+                {formatRange(release)} · {release.data.entryCount} entries
+              </p>
+              <div class="season-prose rounded-md border border-ink-700 bg-ink-900/70 p-4 sm:p-6 lg:p-8">
+                <Content />
+              </div>
+            </section>
+          ))
+        }
+      </div>
+
+      {/* Releases in this era, mirroring the per-season page's sidebar. */}
+      <aside class="patch-toc order-first mb-8 lg:order-0 lg:mb-0">
+        <nav aria-label={`Releases in ${label}`} class="lg:sticky lg:top-24">
+          <p class="font-mono text-xs uppercase tracking-wider text-ink-400">
+            On this page ({releases.length})
+          </p>
+          <ul class="mt-3 space-y-1 border-ink-800 text-xs lg:border-l lg:pl-3">
+            {
+              releases.map((release) => (
+                <li>
+                  <a
+                    href={`#${release.id}`}
+                    class="block rounded py-1 text-ink-400 transition-colors hover:text-ember-300"
+                  >
+                    {release.data.title}
+                    <span class="mt-0.5 block font-mono text-[0.68rem] text-ink-400/70">
+                      {release.data.entryCount} entries
+                    </span>
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </aside>
+    </div>
+
+    {/* Mirrors the per-season pager, one level up: these step between eras
+        rather than between individual releases. */}
+    <nav aria-label="Era navigation" class="mt-16 grid gap-3 border-t border-ink-800 pt-8 sm:grid-cols-2">
+      {
+        prev ? (
+          <a
+            href={`/seasons/era/${prev.slug}`}
+            class="group rounded border border-ink-700 bg-ink-900/85 p-4 transition-colors hover:border-ember-500/50"
+          >
+            <span class="text-xs text-ink-400">← Previous era</span>
+            <span class="mt-1 block font-display text-sm font-semibold text-ink-100 group-hover:text-ember-300">
+              {prev.label}
+            </span>
+          </a>
+        ) : (
+          <span />
+        )
+      }
+      {
+        next && (
+          <a
+            href={`/seasons/era/${next.slug}`}
+            class="group rounded border border-ink-700 bg-ink-900/85 p-4 text-right transition-colors hover:border-ember-500/50 sm:col-start-2"
+          >
+            <span class="text-xs text-ink-400">Next era →</span>
+            <span class="mt-1 block font-display text-sm font-semibold text-ink-100 group-hover:text-ember-300">
+              {next.label}
+            </span>
+          </a>
+        )
+      }
+    </nav>
+  </article>
+
+  <Citations refIds={citedRefs} />
+</BaseLayout>
