@@ -47,6 +47,31 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* Two stacked fixed layers behind every page, both painted over the flat
+     `ink-950` body colour:
+       ::after  (-2) — the painted world art, dimmed and faded out downward.
+       ::before (-1) — the ember/blood glow, unchanged, on top of the art.
+     Neither scrolls, so long pages keep the same backdrop throughout. */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background-image: url('/bg.webp');
+    background-position: center top;
+    background-size: cover;
+    background-repeat: no-repeat;
+
+    /* The art is far too loud at full strength behind body copy. Knock it back
+       and fade it to nothing past the fold so the lower half of long pages is
+       plain ink. */
+    opacity: 0.1;
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 35%, transparent 90%);
+    mask-image: linear-gradient(to bottom, black 0%, black 35%, transparent 90%);
+    filter: brightness(0.5);
+  }
+
   /* Faint arcane glow behind the whole page. */
   body::before {
     content: '';
