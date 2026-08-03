@@ -298,7 +298,7 @@
      their own body text — too close to read as a level change while scanning.
      1.35rem gives a clear step and scales up once there is room for it. */
   .season-prose h2 {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
     font-weight: 600;
     color: var(--color-ember-300);
     margin-block: 2.25rem 0.85rem;

@@ -21,13 +21,12 @@ function isActive(href: string): boolean {
   data-site-header
 >
   <div class="page-shell flex max-w-6xl items-center justify-between gap-3 py-3">
-    <a href="/" class="group flex shrink-0 items-center gap-2.5">
-      <span
-        class="grid h-8 w-8 place-items-center rounded border border-ember-500/40 bg-ember-500/10 font-display text-sm font-bold text-ember-300"
-        aria-hidden="true">MU</span
-      >
-      <span class="font-display text-sm font-semibold tracking-wide text-ink-100 sm:text-base">
-        MU Online History
+    <a href="/" class="group flex shrink-0 items-center">
+      {/* The game name carries the brand colour; "History" is the descriptor and
+          sits back, so the eye lands on what the site is about first. */}
+      <span class="font-display text-base font-semibold tracking-wide sm:text-lg">
+        <span class="text-ember-300 transition-colors group-hover:text-ember-400">MU Online</span>
+        <span class="text-ink-300 transition-colors group-hover:text-ink-200"> History</span>
       </span>
     </a>
 
