@@ -5,7 +5,8 @@ A static, fully-cited timeline of MU Online — every version, season and notabl
 
 78 releases · ~1,000 changelog entries · 435 cited sources.
 
-Source: [Khdoop/mu-online-history](https://github.com/Khdoop/mu-online-history)
+**[mu-online-history.vercel.app](https://mu-online-history.vercel.app)** · source:
+[Khdoop/mu-online-history](https://github.com/Khdoop/mu-online-history)
 
 ## Credits
 
@@ -98,8 +99,11 @@ Nothing else is needed on the host: `npm run build` regenerates the content from
 building, so the git-ignored generated files are recreated on every deploy. The output is fully
 static (83 prerendered pages, ~1.4 MB) — no SSR, no serverless functions, no image optimization.
 
-Before going live, set `site` in `astro.config.mjs` to the real deployed URL. It drives canonical
-links and Open Graph tags.
+Live at **<https://mu-online-history.vercel.app>**.
+
+That URL is set as `site` in `astro.config.mjs`, which drives canonical links, Open Graph tags and
+the generated sitemap. If the domain ever changes, update it there **and** in
+`public/robots.txt`, which hardcodes the sitemap URL.
 
 > Vercel's Hobby tier is free but **non-commercial only**. If this site ever carries ads or
 > sponsorships, that tier no longer covers it.

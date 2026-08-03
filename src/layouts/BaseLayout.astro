@@ -15,6 +15,9 @@ const {
 } = Astro.props;
 
 const fullTitle = title === 'MU Online History' ? title : `${title} — MU Online History`;
+
+// Absolute URL for this page, used for both the canonical link and og:url.
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
 ---
 
 <!doctype html>
@@ -28,7 +31,12 @@ const fullTitle = title === 'MU Online History' ? title : `${title} — MU Onlin
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="MU Online History" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
