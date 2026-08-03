@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getSeasons, references } from '@/lib/seasons';
+import { REPO_URL, SOURCE_REPO_URL } from '@/lib/site';
 
 const seasons = await getSeasons();
 const totalEntries = seasons.reduce((sum, season) => sum + season.data.entryCount, 0);
@@ -23,7 +24,7 @@ const totalEntries = seasons.reduce((sum, season) => sum + season.data.entryCoun
       <p>
         <strong>
           All of the historical research presented here comes from the <a
-            href="https://github.com/AlighieriDemiurgs/MuHistory"
+            href={SOURCE_REPO_URL}
             target="_blank"
             rel="noopener noreferrer">AlighieriDemiurgs/MuHistory</a
           > repository.
@@ -39,7 +40,7 @@ const totalEntries = seasons.reduce((sum, season) => sum + season.data.entryCoun
         This site contributes only the presentation layer. It is an independent project, not
         affiliated with or endorsed by the MuHistory maintainer. For the canonical, actively
         maintained version of the history — and to submit corrections to it — go to <a
-          href="https://github.com/AlighieriDemiurgs/MuHistory"
+          href={SOURCE_REPO_URL}
           target="_blank"
           rel="noopener noreferrer">the source repository</a
         >.
@@ -68,6 +69,12 @@ const totalEntries = seasons.reduce((sum, season) => sum + season.data.entryCoun
       <p>
         That document is a copy of the upstream MuHistory research, so factual corrections belong
         there rather than here — this site picks them up when it re-syncs and rebuilds.
+      </p>
+      <p>
+        The source code for this site is on <a href={REPO_URL} target="_blank" rel="noopener noreferrer"
+          >GitHub</a
+        >. Bug reports and fixes to the <em>presentation</em> — layout, navigation, the build script —
+        are welcome there.
       </p>
 
       <h2>Disclaimer</h2>

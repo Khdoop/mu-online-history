@@ -1,4 +1,7 @@
 ---
+import GithubIcon from '@/components/GithubIcon.astro';
+import { REPO_URL } from '@/lib/site';
+
 const path = Astro.url.pathname;
 
 const links = [
@@ -28,44 +31,57 @@ function isActive(href: string): boolean {
       </span>
     </a>
 
-    {/* Inline from `sm` up; below that the same links live in the panel below. */}
-    <nav aria-label="Main" class="hidden sm:block">
-      <ul class="flex items-center gap-1 text-sm">
-        {
-          links.map((link) => (
-            <li>
-              <a
-                href={link.href}
-                aria-current={isActive(link.href) ? 'page' : undefined}
-                class:list={[
-                  'block whitespace-nowrap rounded px-3 py-1.5 transition-colors',
-                  isActive(link.href)
-                    ? 'bg-ink-800 text-ember-300'
-                    : 'text-ink-300 hover:bg-ink-850 hover:text-ink-100',
-                ]}
-              >
-                {link.label}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </nav>
+    <div class="flex items-center gap-1">
+      {/* Inline from `sm` up; below that the same links live in the panel below. */}
+      <nav aria-label="Main" class="hidden sm:block">
+        <ul class="flex items-center gap-1 text-sm">
+          {
+            links.map((link) => (
+              <li>
+                <a
+                  href={link.href}
+                  aria-current={isActive(link.href) ? 'page' : undefined}
+                  class:list={[
+                    'block whitespace-nowrap rounded px-3 py-1.5 transition-colors',
+                    isActive(link.href)
+                      ? 'bg-ink-800 text-ember-300'
+                      : 'text-ink-300 hover:bg-ink-850 hover:text-ink-100',
+                  ]}
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
 
-    <button
-      type="button"
-      data-menu-toggle
-      aria-expanded="false"
-      aria-controls="mobile-nav"
-      aria-label="Open menu"
-      class="-mr-1 grid h-10 w-10 shrink-0 place-items-center rounded border border-ink-700 text-ink-200 transition-colors hover:border-ink-600 hover:bg-ink-850 sm:hidden"
-    >
-      <span class="menu-icon" aria-hidden="true">
-        <span></span>
-        <span></span>
-        <span></span>
-      </span>
-    </button>
+      <a
+        href={REPO_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="View source on GitHub"
+        class="hidden shrink-0 place-items-center rounded p-2 text-ink-300 transition-colors hover:bg-ink-850 hover:text-ink-100 sm:grid"
+      >
+        <GithubIcon class="h-[1.15rem] w-[1.15rem]" />
+        <span class="sr-only">View source on GitHub</span>
+      </a>
+
+      <button
+        type="button"
+        data-menu-toggle
+        aria-expanded="false"
+        aria-controls="mobile-nav"
+        aria-label="Open menu"
+        class="-mr-1 grid h-10 w-10 shrink-0 place-items-center rounded border border-ink-700 text-ink-200 transition-colors hover:border-ink-600 hover:bg-ink-850 sm:hidden"
+      >
+        <span class="menu-icon" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </button>
+    </div>
   </div>
 
   {/* Mobile panel. Absolutely positioned so it overlays the page rather than
@@ -96,6 +112,17 @@ function isActive(href: string): boolean {
           </li>
         ))
       }
+      <li class="mt-1 border-t border-ink-800 pt-1">
+        <a
+          href={REPO_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center gap-2.5 rounded px-3 py-3 text-sm text-ink-200 transition-colors hover:bg-ink-850 hover:text-ink-100"
+        >
+          <GithubIcon />
+          View source on GitHub
+        </a>
+      </li>
     </ul>
   </nav>
 </header>

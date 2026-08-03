@@ -5,6 +5,8 @@ A static, fully-cited timeline of MU Online — every version, season and notabl
 
 78 releases · ~1,000 changelog entries · 435 cited sources.
 
+Source: [Khdoop/mu-online-history](https://github.com/Khdoop/mu-online-history)
+
 ## Credits
 
 **All of the historical research in this project comes from
