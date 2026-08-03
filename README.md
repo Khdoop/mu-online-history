@@ -92,8 +92,22 @@ changes only when re-syncing with a newer upstream version.
 
 ## Deployment
 
-Deployed to **Vercel** as a static site — config in [`vercel.json`](vercel.json). Node version is
-pinned by `.nvmrc` and `engines` in `package.json`.
+Deployed to **Vercel** as a static site — config in [`vercel.json`](vercel.json).
+
+### Node version
+
+Pinned to **Node 24** in two places, both of which must agree:
+
+- `engines.node` in `package.json` — what Vercel reads to pick the build image
+- `.nvmrc` — local `nvm use` and other CI
+
+The pin is exact (`24.x`) rather than a range on purpose: an open-ended range like `>=22` makes
+Vercel warn that the build will silently jump to the next Node major when one ships.
+
+> If you develop on a Node version other than 24, `npm install` prints `EBADENGINE` warnings.
+> They are warnings only — installs and builds still succeed. Run `nvm use` to match the pin and
+> they go away. Note `nodeVersion` is **not** a valid `vercel.json` key; the pin has to live in
+> `engines`.
 
 Nothing else is needed on the host: `npm run build` regenerates the content from `source.md` before
 building, so the git-ignored generated files are recreated on every deploy. The output is fully
