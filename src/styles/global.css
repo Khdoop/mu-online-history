@@ -279,18 +279,26 @@
     overflow-wrap: break-word;
   }
 
+  /* Mono faces run visually smaller than the sans at a matched size, so this
+     sits closer to 1em than a naive ratio would suggest. */
   .season-prose code {
     font-family: var(--font-mono);
-    font-size: 0.85em;
+    font-size: 0.9em;
     overflow-wrap: break-word;
-    background-color: var(--color-ink-850);
+
+    /* Darker than ink-850, which now matches the prose panel's own fill almost
+       exactly (1.00 contrast) and would make these chips vanish inside it. */
+    background-color: var(--color-ink-950);
     border: 1px solid var(--color-ink-700);
     border-radius: 3px;
     padding: 0.1em 0.35em;
   }
 
+  /* Patch headings. At 1.05rem against 0.925rem body these were only 1.13x
+     their own body text — too close to read as a level change while scanning.
+     1.35rem gives a clear step and scales up once there is room for it. */
   .season-prose h2 {
-    font-size: 1.05rem;
+    font-size: 1.3rem;
     font-weight: 600;
     color: var(--color-ember-300);
     margin-block: 2.25rem 0.85rem;
@@ -303,11 +311,27 @@
     margin-top: 0;
   }
 
+  /* Phones get a slightly tighter heading and body — the measure is short
+     enough there that the full desktop step reads as oversized. */
+  @media (width < 40rem) {
+    .season-prose h2 {
+      font-size: 1.2rem;
+      margin-block: 1.9rem 0.75rem;
+    }
+
+    .season-prose > p,
+    .season-prose li {
+      font-size: 0.95rem;
+    }
+  }
+
+  /* The 18px root exists to be the reading size, so body copy sits at a full
+     1rem rather than shrinking below it. */
   .season-prose > p {
     color: var(--color-ink-300);
-    font-size: 0.925rem;
+    font-size: 1rem;
     line-height: 1.75;
-    margin-block: 0.85rem;
+    margin-block: 0.9rem;
   }
 
   .season-prose ul {
@@ -317,10 +341,12 @@
     margin-block: 0.85rem;
   }
 
+  /* Changelog entries are the bulk of the content, so they read at the same
+     1rem as body copy rather than being demoted to a caption size. */
   .season-prose li {
     position: relative;
     padding-left: 1.15rem;
-    font-size: 0.925rem;
+    font-size: 1rem;
     line-height: 1.7;
   }
 
@@ -341,9 +367,12 @@
     gap: 0.4rem;
   }
 
+  /* Still demoted relative to the entry above, but `em` rather than `rem` so
+     the ratio holds if the parent size ever changes. */
   .season-prose li li {
     color: var(--color-ink-400);
-    font-size: 0.85rem;
+    font-size: 0.92em;
+    line-height: 1.65;
     border-left: 2px solid var(--color-ink-700);
     padding-left: 0.85rem;
   }
@@ -372,7 +401,7 @@
     display: inline-flex;
     gap: 0.25rem;
     vertical-align: super;
-    font-size: 0.66em;
+    font-size: 0.72em;
     line-height: 1;
     margin-left: 0.25em;
   }

@@ -55,7 +55,13 @@ const patches = headings.filter((heading) => heading.depth === 2);
     </header>
 
     <div class="mt-10 gap-12 lg:grid lg:grid-cols-[minmax(0,1fr)_16rem]">
-      <div class="season-prose min-w-0">
+      {/* The changelog is the only content block on the site that was not on a
+          surface — every card, reference row and nav panel already uses this
+          same treatment. It also sits directly over the background art, so an
+          opaque fill is what keeps the body text off the moving backdrop. */}
+      <div
+        class="season-prose min-w-0 rounded-md border border-ink-700 bg-ink-900/70 p-4 sm:p-6 lg:p-8"
+      >
         <Content />
       </div>
 

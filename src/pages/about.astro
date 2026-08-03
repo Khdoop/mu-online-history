@@ -11,7 +11,11 @@ const totalEntries = seasons.reduce((sum, season) => sum + season.data.entryCoun
   <div class="page-shell max-w-6xl py-10 sm:py-12">
     <h1 class="font-display text-2xl font-bold text-ink-100 sm:text-4xl">About this project</h1>
 
-    <div class="season-prose mt-8">
+    {/* The shell is `6xl` to match every other page, but this page has no TOC
+        sidebar to absorb the extra width. Cap it at the measure the season
+        pages end up with (6xl less the 16rem TOC and its gap) so the two read
+        at the same line length. */}
+    <div class="season-prose mt-8 max-w-212">
       <p>
         This site documents the release history of <strong>MU Online</strong> — every version,
         season and notable patch from the 2001 closed alpha in South Korea through to the current
