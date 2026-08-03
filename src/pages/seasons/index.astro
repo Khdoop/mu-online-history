@@ -58,7 +58,7 @@ const totalEntries = seasons.reduce((sum, season) => sum + season.data.entryCoun
                 <li data-season data-title={`${season.data.title} ${season.data.range}`.toLowerCase()}>
                   <a
                     href={`/seasons/${season.id}`}
-                    class="group block h-full rounded border border-ink-800 bg-ink-900/50 p-4 transition-colors hover:border-ember-500/50 hover:bg-ink-850"
+                    class="group block h-full rounded border border-ink-700 bg-ink-900/85 p-4 transition-colors hover:border-ember-500/50 hover:bg-ink-850"
                   >
                     <h3 class="font-display text-sm font-semibold text-ink-100 group-hover:text-ember-300">
                       {season.data.title}
@@ -177,7 +177,7 @@ const totalEntries = seasons.reduce((sum, season) => sum + season.data.entryCoun
 
           li.innerHTML = `
             <a href="${href}"
-               class="block rounded border border-ink-800 bg-ink-900/50 p-4 transition-colors hover:border-ember-500/50 hover:bg-ink-850">
+               class="block rounded border border-ink-700 bg-ink-900/85 p-4 transition-colors hover:border-ember-500/50 hover:bg-ink-850">
               <p class="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs">
                 <span class="font-display font-semibold text-ember-300">${escapeHtml(entry.st)}</span>
                 ${entry.h ? `<span class="font-mono text-ink-400">${highlight(entry.h, needle)}</span>` : ''}

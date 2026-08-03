@@ -4,10 +4,25 @@
   --color-ink-950: #08090d;
   --color-ink-900: #0d0f16;
   --color-ink-850: #12141d;
-  --color-ink-800: #171a25;
-  --color-ink-700: #232634;
-  --color-ink-600: #333747;
-  --color-ink-400: #6f7590;
+  /* Border/divider steps, measured rather than eyeballed.
+
+     The fixed art layer raises the local background to ~#292e33 at its
+     brightest, which lands *between* flat ink-950 and these borders — so a
+     border that reads well on plain ink can wash out completely over the art,
+     and nudging it lighter can make it worse before it gets better. No dark
+     value clears 3.0 against both; that needs mid-grey (#737684), which costs
+     the theme its mood.
+
+     Resolution: content surfaces below are opaque enough that the art barely
+     reaches them (1.03-1.06 drift), so borders are tuned against the surface
+     they actually sit on and land ~1.9-2.6 there. Visible structure, still dark. */
+  --color-ink-800: #2f3342;
+  --color-ink-700: #414452;
+  --color-ink-600: #55596b;
+
+  /* Muted body text — meta lines, footer, nested notes, reference URLs. The
+     old #6f7590 scored 3.02 over the art, under the 4.5 AA needs. */
+  --color-ink-400: #8d93ae;
   --color-ink-300: #9aa0bb;
   --color-ink-200: #c3c8dd;
   --color-ink-100: #e7e9f3;
@@ -66,10 +81,9 @@
     /* The art is far too loud at full strength behind body copy. Knock it back
        and fade it to nothing past the fold so the lower half of long pages is
        plain ink. */
-    opacity: 0.1;
+    opacity: 0.2;
     -webkit-mask-image: linear-gradient(to bottom, black 0%, black 35%, transparent 90%);
     mask-image: linear-gradient(to bottom, black 0%, black 35%, transparent 90%);
-    filter: brightness(0.5);
   }
 
   /* Faint arcane glow behind the whole page. */
